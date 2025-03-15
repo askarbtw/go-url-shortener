@@ -3,17 +3,19 @@
 <div align="center">
   <img src="https://img.shields.io/badge/Go-1.16+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Version" />
   <img src="https://img.shields.io/badge/MongoDB-4.4+-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Redis-6.0+-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License: MIT" />
 </div>
 
 <p align="center">
-  A modern, high-performance URL shortening service built with Go, MongoDB, and React.
+  A modern, high-performance URL shortening service built with Go, MongoDB, Redis, and React.
 </p>
 
 ## 🚀 Features
 
 - **Fast URL Shortening**: Generate short, unique codes for long URLs in milliseconds
+- **Redis Caching**: High-performance caching for frequently accessed URLs
 - **Easy-to-Use API**: RESTful API for all URL operations
 - **Modern Dashboard**: React-based frontend for user-friendly URL management
 - **URL Management**: Create, read, update, and delete short URLs
@@ -56,12 +58,23 @@ The system works in layers:
 3. **Repository Layer**: Manages database interactions
 4. **Model Layer**: Defines data structures
 
+### Caching Architecture
+
+The application uses Redis for high-performance caching:
+
+- URL lookups are first attempted from the Redis cache
+- Cache misses fall back to MongoDB database queries
+- Successful database queries populate the cache for future requests
+- Cache entries have a configurable TTL (Time To Live)
+- URL updates/deletes automatically invalidate cache entries
+
 ## 📦 Installation
 
 ### Prerequisites
 
 - Go 1.16+
 - MongoDB 4.4+
+- Redis 6.0+ (optional, but recommended for production)
 - Node.js 14+
 - npm or yarn
 
@@ -97,11 +110,14 @@ MONGO_URI=mongodb://localhost:27017
 DB_NAME=URL_shortener
 PORT=8080
 BASE_URL=http://localhost:8080/
+REDIS_URI=localhost:6379
+REDIS_PASSWORD=
+CACHE_TTL=3600
 ```
 
-5. **Start MongoDB**
+5. **Start MongoDB and Redis**
 
-Ensure your MongoDB instance is running.
+Ensure your MongoDB and Redis instances are running.
 
 ## 🔧 Usage
 
@@ -261,12 +277,15 @@ The project includes a modern React frontend with:
 
 The application can be configured using environment variables in the `.env` file:
 
-| Variable  | Description              | Default                  |
-|-----------|--------------------------|--------------------------|
-| MONGO_URI | MongoDB connection URI   | mongodb://localhost:27017|
-| DB_NAME   | MongoDB database name    | URL_shortener            |
-| PORT      | Port for the backend API | 8080                     |
-| BASE_URL  | Base URL for short links | http://localhost:8080/   |
+| Variable        | Description                   | Default                  |
+|-----------------|-------------------------------|--------------------------|
+| MONGO_URI       | MongoDB connection URI        | mongodb://localhost:27017|
+| DB_NAME         | MongoDB database name         | URL_shortener            |
+| PORT            | Port for the backend API      | 8080                     |
+| BASE_URL        | Base URL for short links      | http://localhost:8080/   |
+| REDIS_URI       | Redis connection URI          | localhost:6379           |
+| REDIS_PASSWORD  | Redis password (if required)  | (empty)                  |
+| CACHE_TTL       | Cache time to live in seconds | 3600 (1 hour)            |
 
 ## 🛠️ Development
 
@@ -274,7 +293,9 @@ The application can be configured using environment variables in the `.env` file
 
 ```
 ├── config/
-│   └── config.go          # Configuration handling
+│   ├── config.go          # Configuration handling
+│   ├── db.go              # MongoDB connection
+│   └── redis.go           # Redis connection
 ├── controllers/
 │   └── url_controller.go  # HTTP handlers for URL operations
 ├── models/
@@ -283,6 +304,7 @@ The application can be configured using environment variables in the `.env` file
 ├── repositories/
 │   └── url_repository.go  # MongoDB data access layer
 ├── services/
+│   ├── cache_service.go   # Redis caching service
 │   └── url_service.go     # Business logic for URL operations
 ├── utils/
 │   └── shortcode.go       # Short code generation utilities
@@ -329,4 +351,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 <p align="center">
   Made with ❤️ by <a href="https://github.com/askarbtw">askarbtw</a>
 </p> 
-MIT 

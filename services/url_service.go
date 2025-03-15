@@ -11,12 +11,14 @@ import (
 // URLService handles business logic for URL operations
 type URLService struct {
 	repository *repositories.URLRepository
+	cache      *CacheService
 }
 
 // NewURLService creates a new instance of URLService
-func NewURLService(repository *repositories.URLRepository) *URLService {
+func NewURLService(repository *repositories.URLRepository, cache *CacheService) *URLService {
 	return &URLService{
 		repository: repository,
+		cache:      cache,
 	}
 }
 
@@ -53,6 +55,10 @@ func (s *URLService) CreateURL(originalURL string) (models.URL, error) {
 		// Try to save to database
 		createdURL, err := s.repository.CreateURL(url)
 		if err == nil {
+			// Store in cache
+			if s.cache != nil {
+				s.cache.SetURL(createdURL)
+			}
 			return createdURL, nil
 		}
 		log.Printf("Failed to create URL with short code %s (attempt %d): %v", shortCode, attempt+1, err)
@@ -64,7 +70,26 @@ func (s *URLService) CreateURL(originalURL string) (models.URL, error) {
 
 // GetURL retrieves a URL by its short code
 func (s *URLService) GetURL(shortCode string) (models.URL, error) {
-	return s.repository.GetURLByShortCode(shortCode)
+	// Try to get from cache first
+	if s.cache != nil {
+		if url, found := s.cache.GetURL(shortCode); found {
+			log.Printf("Cache hit for shortCode: %s", shortCode)
+			return url, nil
+		}
+	}
+
+	// If not in cache, get from database
+	url, err := s.repository.GetURLByShortCode(shortCode)
+	if err != nil {
+		return models.URL{}, err
+	}
+
+	// Store in cache for future requests
+	if s.cache != nil {
+		s.cache.SetURL(url)
+	}
+
+	return url, nil
 }
 
 // UpdateURL updates an existing URL
@@ -77,15 +102,48 @@ func (s *URLService) UpdateURL(shortCode string, originalURL string) (models.URL
 	// Ensure URL has proper protocol prefix
 	originalURL = utils.PrepareURL(originalURL)
 
-	return s.repository.UpdateURL(shortCode, originalURL)
+	// Update in database
+	updatedURL, err := s.repository.UpdateURL(shortCode, originalURL)
+	if err != nil {
+		return models.URL{}, err
+	}
+
+	// Update cache
+	if s.cache != nil {
+		s.cache.SetURL(updatedURL)
+	}
+
+	return updatedURL, nil
 }
 
 // DeleteURL deletes a URL
 func (s *URLService) DeleteURL(shortCode string) error {
-	return s.repository.DeleteURL(shortCode)
+	// Delete from database
+	err := s.repository.DeleteURL(shortCode)
+	if err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	if s.cache != nil {
+		s.cache.InvalidateURL(shortCode)
+	}
+
+	return nil
 }
 
 // IncrementAccessCount increments the access count for a URL
 func (s *URLService) IncrementAccessCount(shortCode string) error {
-	return s.repository.IncrementAccessCount(shortCode)
+	// Increment in database
+	err := s.repository.IncrementAccessCount(shortCode)
+	if err != nil {
+		return err
+	}
+
+	// Invalidate cache since the access count has changed
+	if s.cache != nil {
+		s.cache.InvalidateURL(shortCode)
+	}
+
+	return nil
 }

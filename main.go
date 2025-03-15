@@ -44,11 +44,22 @@ func main() {
 	db := config.ConnectDB(conf)
 	defer db.Close()
 
+	// Connect to Redis (if available)
+	redisCache := config.ConnectRedis(conf)
+	if redisCache != nil {
+		defer redisCache.Close()
+	} else {
+		log.Println("Warning: Redis cache not available. Running without cache.")
+	}
+
 	// Create repository
 	urlRepository := repositories.NewURLRepository(db)
 
+	// Create cache service
+	cacheService := services.NewCacheService(redisCache, conf.CacheTTL)
+
 	// Create service
-	urlService := services.NewURLService(urlRepository)
+	urlService := services.NewURLService(urlRepository, cacheService)
 
 	// Create controller
 	urlController := controllers.NewURLController(urlService, conf.BaseURL)

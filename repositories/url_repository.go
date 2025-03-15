@@ -161,3 +161,22 @@ func (r *URLRepository) IncrementAccessCount(shortCode string) error {
 
 	return nil
 }
+
+// GetAllURLs retrieves all URLs from the database
+func (r *URLRepository) GetAllURLs() ([]models.URL, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cursor, err := r.collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var urls []models.URL
+	if err := cursor.All(ctx, &urls); err != nil {
+		return nil, err
+	}
+
+	return urls, nil
+}

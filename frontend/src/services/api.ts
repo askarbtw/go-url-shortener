@@ -44,6 +44,17 @@ export const urlAPI = {
     const response = await api.get<URLStats>(`/shorten/${shortCode}/stats`);
     return response.data;
   },
+  
+  // Get all URLs with stats
+  getAllURLs: async (): Promise<URLStats[]> => {
+    try {
+      const response = await api.get<URLStats[]>('/shorten');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching URLs:', error);
+      return [];
+    }
+  },
 };
 
 // Generate the full redirect URL for a short code

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { 
   Box, 
   Heading, 
@@ -7,18 +7,21 @@ import {
   VStack,
   Card,
   CardHeader,
-  CardBody
+  CardBody,
+  Divider
 } from '@chakra-ui/react';
 import { urlAPI } from '../services/api';
 import { handleApiError } from '../utils/helpers';
 import { URL } from '../types/url';
 import URLForm from '../components/URLForm';
 import URLCard from '../components/URLCard';
+import URLList, { URLListRefHandle } from '../components/URLList';
 
 const HomePage = () => {
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [shortenedUrl, setShortenedUrl] = useState<URL | null>(null);
+  const urlListRef = useRef<URLListRefHandle>(null);
 
   const handleCreateURL = async (url: string) => {
     setIsLoading(true);
@@ -31,6 +34,11 @@ const HomePage = () => {
         duration: 3000,
         isClosable: true,
       });
+      
+      // Refresh the URL list after creating a new URL
+      if (urlListRef.current) {
+        urlListRef.current.fetchUrls();
+      }
     } catch (error) {
       const errorMessage = handleApiError(error);
       toast({
@@ -64,11 +72,21 @@ const HomePage = () => {
       </Card>
 
       {shortenedUrl && (
-        <VStack spacing={4} align="stretch">
+        <VStack spacing={4} align="stretch" mb={8}>
           <Heading size="md">Your Shortened URL</Heading>
           <URLCard urlData={shortenedUrl} />
         </VStack>
       )}
+
+      <Divider my={8} />
+
+      <VStack spacing={4} align="stretch">
+        <Heading size="md">Your URL History</Heading>
+        <Text color="gray.600" pb={4}>
+          View and manage all your shortened URLs and their statistics.
+        </Text>
+        <URLList ref={urlListRef} />
+      </VStack>
     </Box>
   );
 };

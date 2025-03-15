@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Box, Button, Flex, HStack, IconButton, Text, Tooltip, useToast } from '@chakra-ui/react';
-import { FiCopy, FiEdit, FiExternalLink, FiTrash2 } from 'react-icons/fi';
+import { Box, Button, Flex, HStack, IconButton, Text, Tooltip, useToast, Badge } from '@chakra-ui/react';
+import { FiCopy, FiEdit, FiExternalLink, FiTrash2, FiBarChart2 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { URL, URLStats } from '../types/url';
 import { copyToClipboard, formatDate } from '../utils/helpers';
@@ -42,6 +42,10 @@ const URLCard = ({ urlData, onDelete, showStats = false }: URLCardProps) => {
     navigate(`/edit/${urlData.shortCode}`);
   };
 
+  const handleViewStats = () => {
+    navigate(`/stats/${urlData.shortCode}`);
+  };
+
   const handleDelete = async () => {
     if (!onDelete) return;
     
@@ -65,6 +69,9 @@ const URLCard = ({ urlData, onDelete, showStats = false }: URLCardProps) => {
       setIsDeleting(false);
     }
   };
+
+  // Check if the URL has access count stats
+  const hasStats = 'accessCount' in urlData;
 
   return (
     <Box borderWidth="1px" borderRadius="lg" overflow="hidden" p={4} bg="white" shadow="sm">
@@ -102,10 +109,15 @@ const URLCard = ({ urlData, onDelete, showStats = false }: URLCardProps) => {
           </HStack>
         </Flex>
 
-        {showStats && 'accessCount' in urlData && (
-          <Text>
-            Access Count: <Text as="span" fontWeight="bold">{urlData.accessCount}</Text>
-          </Text>
+        {(showStats && hasStats) && (
+          <Flex alignItems="center">
+            <Text>
+              Access Count: <Text as="span" fontWeight="bold">{(urlData as URLStats).accessCount}</Text>
+            </Text>
+            {!onDelete && (
+              <Badge ml={2} colorScheme="blue">Stats Page</Badge>
+            )}
+          </Flex>
         )}
 
         <Text fontSize="sm" color="gray.500">
@@ -118,6 +130,16 @@ const URLCard = ({ urlData, onDelete, showStats = false }: URLCardProps) => {
 
         {onDelete && (
           <Flex mt={2} justifyContent="flex-end">
+            <Button
+              size="sm"
+              colorScheme="blue"
+              variant="outline"
+              leftIcon={<FiBarChart2 />}
+              mr={2}
+              onClick={handleViewStats}
+            >
+              Stats
+            </Button>
             <Button
               size="sm"
               colorScheme="blue"

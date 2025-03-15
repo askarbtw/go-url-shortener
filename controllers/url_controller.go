@@ -181,3 +181,29 @@ func (c *URLController) GetURLStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+// GetAllURLStats retrieves statistics for all URLs
+func (c *URLController) GetAllURLStats(w http.ResponseWriter, r *http.Request) {
+	// Get all URLs with stats
+	urls, err := c.service.GetAllURLsWithStats()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create response
+	var response []models.URLStatsResponse
+	for _, url := range urls {
+		response = append(response, models.URLStatsResponse{
+			ID:          url.ID,
+			URL:         url.OriginalURL,
+			ShortCode:   url.ShortCode,
+			CreatedAt:   url.CreatedAt,
+			UpdatedAt:   url.UpdatedAt,
+			AccessCount: url.AccessCount,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}

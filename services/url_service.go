@@ -147,3 +147,8 @@ func (s *URLService) IncrementAccessCount(shortCode string) error {
 
 	return nil
 }
+
+// GetAllURLsWithStats retrieves all URLs with their statistics
+func (s *URLService) GetAllURLsWithStats() ([]models.URL, error) {
+	return s.repository.GetAllURLs()
+}

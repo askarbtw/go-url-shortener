@@ -72,6 +72,7 @@ func main() {
 
 	// API routes
 	router.HandleFunc("/shorten", urlController.CreateURL).Methods("POST")
+	router.HandleFunc("/shorten", urlController.GetAllURLStats).Methods("GET")
 	router.HandleFunc("/shorten/{shortCode}", urlController.GetURL).Methods("GET")
 	router.HandleFunc("/shorten/{shortCode}", urlController.UpdateURL).Methods("PUT")
 	router.HandleFunc("/shorten/{shortCode}", urlController.DeleteURL).Methods("DELETE")

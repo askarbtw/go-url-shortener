@@ -11,6 +11,7 @@
 <p align="center">
   A modern, high-performance URL shortening service built with Go, MongoDB, Redis, and React.
 </p>
+<img width="1440" alt="image" src="https://github.com/user-attachments/assets/dd361fed-dcc6-4fde-a89c-d87e5fe7917a" />
 
 ## 🚀 Features
 
